@@ -662,7 +662,8 @@ namespace ModiBuff.Core.Units
 			return new SaveData(Id, UnitTag, Health, MaxHealth, Damage, HealValue, Mana, MaxMana,
 				UnitType, IsDead, ModifierController.SaveState(),
 				_modifierAppliers.ToDictionary(a => a.Key,
-					a => a.Value.Select(cs => (cs.Id, cs.Checks.Select(c => (c as IStateCheck)?.SaveState())))),
+					//Appliers without checks have no check state to save, non-state checks are saved as null placeholders
+					a => a.Value.Select(cs => (cs.Id, cs.Checks?.Select(c => (c as IStateCheck)?.SaveState())))),
 				_statusEffectController.SaveState(),
 				_singleInstanceStatusEffectController.SaveState());
 		}
@@ -693,17 +694,17 @@ namespace ModiBuff.Core.Units
 
 						var loadCheck = _modifierAppliers[loadPair.Key].First(c => c.Id == id); //TODO Nullable
 
+						//Applier was saved without checks, or doesn't have any now, nothing to load
+						if (checkStates == null || loadCheck.Checks == null)
+							continue;
+
 						int i = 0;
-						foreach (object state in checkStates)
+						foreach (object? state in checkStates)
 						{
-#if MODIBUFF_SYSTEM_TEXT_JSON
-							if (state.FromAnonymousJsonObjectToSaveData((IStateCheck)loadCheck.Checks[i]))
-							{
-								i++;
-								continue;
-							}
-#endif
-							((IStateCheck)loadCheck.Checks[i]).LoadState(state);
+							//Only state checks have saved state, the rest are null placeholders that keep the order
+							if (state != null && i < loadCheck.Checks.Length &&
+							    loadCheck.Checks[i] is IStateCheck stateCheck)
+								stateCheck.LoadStateFromSaveData(state);
 							i++;
 						}
 					}

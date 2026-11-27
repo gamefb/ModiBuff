@@ -6,6 +6,22 @@ namespace ModiBuff.Core
 {
 	public static class SerializationExtensions
 	{
+		/// <summary>
+		///		Loads <paramref name="saveData"/> into <paramref name="toLoad"/>, works with both typed save data and
+		///		(when ModiBuff is compiled with MODIBUFF_SYSTEM_TEXT_JSON) save data deserialized as anonymous json.
+		/// </summary>
+		/// <remarks>
+		///		Always available, so code outside of ModiBuff.Core doesn't need to know if Core has json support.
+		/// </remarks>
+		public static void LoadStateFromSaveData(this ISavable toLoad, object saveData)
+		{
+#if MODIBUFF_SYSTEM_TEXT_JSON
+			if (saveData.FromAnonymousJsonObjectToSaveData(toLoad))
+				return;
+#endif
+			toLoad.LoadState(saveData);
+		}
+
 #if MODIBUFF_SYSTEM_TEXT_JSON
 		private static readonly Dictionary<Type, Func<System.Text.Json.JsonElement, object>> customValueTypes =
 			new Dictionary<Type, Func<System.Text.Json.JsonElement, object>>();
