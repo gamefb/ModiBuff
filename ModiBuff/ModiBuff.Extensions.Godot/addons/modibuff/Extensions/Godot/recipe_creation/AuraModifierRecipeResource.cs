@@ -10,7 +10,7 @@ namespace ModiBuff.Extensions.Godot
 		///		Tied aura effects, use this if we're using an applier as a EffectResource 
 		/// </summary>
 		[Export]
-		public AuraEffectModifierRecipeResource[] AuraEffectResources { get; set; }
+		public AuraEffectModifierRecipeResource[]? AuraEffectResources { get; set; }
 
 		//---Effects---
 
@@ -18,7 +18,7 @@ namespace ModiBuff.Extensions.Godot
 		///		Effects that get applied on specific actions (init, stack, interval, duration). 
 		/// </summary>
 		[Export]
-		public EffectOnResource[] EffectResources { get; set; }
+		public EffectOnResource[]? EffectResources { get; set; }
 
 		//---Actions---
 

@@ -1,18 +1,27 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Godot.NET.Sdk/4.8.0-beta.5">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <RootNamespace>ModiBuff.Extensions.Godot</RootNamespace>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\ModiBuff.Units\ModiBuff.Units.csproj"/>
-        <ProjectReference Include="..\ModiBuff\ModiBuff.csproj"/>
-    </ItemGroup>
+    <!--
+        Godot builds with the Debug, ExportDebug and ExportRelease configurations.
+        The ModiBuff libraries only know Debug and Release, so map to those.
+    -->
+    <PropertyGroup>
+        <ModiBuffConfiguration>Debug</ModiBuffConfiguration>
+        <ModiBuffConfiguration Condition=" '$(Configuration)' == 'ExportRelease' ">Release</ModiBuffConfiguration>
+    </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="GodotSharp" Version="4.1.1"/>
+        <ProjectReference Include="..\ModiBuff.Units\ModiBuff.Units.csproj"
+                          SetConfiguration="Configuration=$(ModiBuffConfiguration)"/>
+        <ProjectReference Include="..\ModiBuff\ModiBuff.csproj"
+                          SetConfiguration="Configuration=$(ModiBuffConfiguration)"/>
     </ItemGroup>
 
 </Project>

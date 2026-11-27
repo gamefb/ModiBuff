@@ -255,6 +255,43 @@ at some point.
 > Note: It's recommended to use the source/non-DLL/debug version of the library in development, since it has
 > useful logging/debugging features.
 
+## Godot
+
+The Godot extension lets you set up modifier recipes as resources in the inspector, instead of in code.
+[ModiBuff.Extensions.Godot](ModiBuff/ModiBuff.Extensions.Godot) is a Godot 4.8 project (needs the .NET build of Godot
+and the .NET 10 SDK), the extension itself is in its `addons/modibuff/Extensions/Godot` folder.
+
+1. Copy `addons/modibuff/Extensions/Godot` into your Godot project, at the same path.
+2. Make ModiBuff and ModiBuff.Units available to your game. Either reference the projects from your game's `.csproj`
+   (see [ModiBuff.Extensions.Godot.csproj](ModiBuff/ModiBuff.Extensions.Godot/ModiBuff.Extensions.Godot.csproj)),
+   or copy `ModiBuff/ModiBuff/Core` and `ModiBuff/ModiBuff.Units` (without the `.csproj` and `Properties`) into
+   `addons/modibuff/Core` and `addons/modibuff/Units`.
+3. Create `ModifierRecipeResource` resources in `res://resources/modibuff_recipes/` (the default path), and add effect
+   resources like `DamageEffectResource` to them.
+4. Inherit from `ModifierRecipesGodot` and use it like a normal `ModifierRecipes`, all resources in the path
+   get loaded when the generators are created.
+
+```csharp
+Config.DefaultTag = (ulong)ModiBuff.Core.Units.TagType.Default;
+var effectTypeIdManager = new EffectTypeIdManager();
+effectTypeIdManager.RegisterAllEffectTypesInAssemblies();
+var idManager = new ModifierIdManager();
+var recipes = new MyRecipes(idManager, effectTypeIdManager); //Inherits ModifierRecipesGodot
+recipes.CreateGenerators();
+var pool = new ModifierPool(recipes);
+```
+
+Apply conditions, cooldown, cost and chance of a resource are not part of the recipe, they belong to the applier of
+a unit. Create them with `CreateApplyChecks`, and feed them to the unit when adding the applier.
+
+```csharp
+int fireballId = idManager.GetId("Fireball").Value;
+unit.AddApplierModifierNew(fireballId, ApplierType.Cast, recipes.CreateApplyChecks(fireballId));
+unit.TryCast(fireballId, enemy);
+```
+
+> Note: When running from the editor, generated modifier names and ids are written back to the recipe resources.
+
 ## Unity
 
 > Important: Unity installation is currently not maintained, you will be missing new files and their meta files.

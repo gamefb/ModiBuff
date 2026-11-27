@@ -22,6 +22,6 @@ namespace ModiBuff.Extensions.Godot
 		[Export]
 		public StackEffectType StackEffect { get; set; }
 
-		public override IEffect GetEffect() => new AddDamageEffect(AddDamage, EffectState, StackEffect);
+		public override IEffect GetEffect() => new AddDamageEffect(AddDamage, EffectState, StackEffect, targeting: Targeting);
 	}
 }
