@@ -22,7 +22,10 @@ namespace ModiBuff.Examples.BasicConsole
 		public ModifierController ModifierController { get; }
 
 		//TODO Explain
-		private readonly Dictionary<ApplierType, List<(int Id, ICheck[] Checks)>> _modifierAppliers;
+		private readonly Dictionary<ApplierType, List<(int Id, int ApplierGenId, ICheck[] Checks)>> _modifierAppliers;
+
+		//Every added applier gets its own generation id, so one specific applier of a modifier can be removed
+		private readonly Dictionary<int, int> _applierGenIds;
 
 		//Basic implementation of status effects, unit can't attack when it's disarmed
 		//Move when it's rooted/frozen/stunned, etc.
@@ -48,11 +51,12 @@ namespace ModiBuff.Examples.BasicConsole
 
 			//Remember to rent the modifier controllers in the constructor
 			ModifierController = ModifierControllerPool.Instance.Rent();
-			_modifierAppliers = new Dictionary<ApplierType, List<(int, ICheck[])>>
+			_modifierAppliers = new Dictionary<ApplierType, List<(int, int, ICheck[])>>
 			{
-				{ ApplierType.Attack, new List<(int, ICheck[])>() },
-				{ ApplierType.Cast, new List<(int, ICheck[])>() }
+				{ ApplierType.Attack, new List<(int, int, ICheck[])>() },
+				{ ApplierType.Cast, new List<(int, int, ICheck[])>() }
 			};
+			_applierGenIds = new Dictionary<int, int>();
 			StatusEffectController = new StatusEffectController();
 			_targetingSystem = new TargetingSystem();
 		}
@@ -99,7 +103,7 @@ namespace ModiBuff.Examples.BasicConsole
 			if (!StatusEffectController.HasLegalAction(LegalAction.Act))
 				return 0;
 
-			foreach ((int id, ICheck[] checks) in _modifierAppliers[ApplierType.Attack])
+			foreach ((int id, int _, ICheck[] checks) in _modifierAppliers[ApplierType.Attack])
 			{
 				bool checksPassed = true;
 				if (checks != null)
@@ -127,7 +131,9 @@ namespace ModiBuff.Examples.BasicConsole
 			return damageDealt;
 		}
 
-		public bool TryApply(int modifierId, IUnit target)
+		public bool TryApply(int modifierId, IUnit target) => TryApply(modifierId, null, target);
+
+		public bool TryApply(int modifierId, int? applierGenId, IUnit target)
 		{
 			if (!(target is IModifierOwner modifierTarget))
 				return false;
@@ -136,10 +142,11 @@ namespace ModiBuff.Examples.BasicConsole
 			if (!_modifierAppliers.TryGetValue(ApplierType.Cast, out var appliers))
 				return false;
 
-			(int Id, ICheck[] Checks)? applier = null;
+			(int Id, int ApplierGenId, ICheck[] Checks)? applier = null;
 			for (int i = 0; i < appliers.Count; i++)
 			{
-				if (appliers[i].Id == modifierId)
+				if (appliers[i].Id == modifierId &&
+				    (applierGenId == null || appliers[i].ApplierGenId == applierGenId))
 				{
 					applier = appliers[i];
 					break;
@@ -207,12 +214,18 @@ namespace ModiBuff.Examples.BasicConsole
 			return _modifierAppliers.TryGetValue(applierType, out var list) && list.Exists(c => c.Id == modifierId);
 		}
 
-		public bool RemoveApplier(int id, ApplierType applierType)
+		public bool ContainsApplier(int modifierId, int applierGenId, ApplierType applierType)
+		{
+			return _modifierAppliers.TryGetValue(applierType, out var list) &&
+			       list.Exists(c => c.Id == modifierId && c.ApplierGenId == applierGenId);
+		}
+
+		public bool RemoveApplier(int id, int? applierGenId, ApplierType applierType)
 		{
 			if (!_modifierAppliers.TryGetValue(applierType, out var list))
 				return false;
 
-			int index = list.FindIndex(c => c.Id == id);
+			int index = list.FindIndex(c => c.Id == id && (applierGenId == null || c.ApplierGenId == applierGenId));
 			if (index == -1)
 				return false;
 
@@ -220,28 +233,33 @@ namespace ModiBuff.Examples.BasicConsole
 			return true;
 		}
 
-		public void AddApplierModifierNew(int modifierId, ApplierType applierType, ICheck[] checks = null)
+		/// <returns>Generation id of the added applier, used to target this exact applier later</returns>
+		public int AddApplierModifierNew(int modifierId, ApplierType applierType, ICheck[] checks = null)
 		{
-			if (checks?.Length > 0)
-			{
-				if (_modifierAppliers.TryGetValue(applierType, out var list))
-				{
-					list.Add((modifierId, checks));
-					return;
-				}
+			int applierGenId = _applierGenIds.TryGetValue(modifierId, out int lastGenId) ? lastGenId + 1 : 0;
+			_applierGenIds[modifierId] = applierGenId;
 
-				_modifierAppliers[applierType] =
-					new List<(int Id, ICheck[] Checks)>(new[] { (modifierId, checks) });
-				return;
-			}
+			if (!_modifierAppliers.TryGetValue(applierType, out var list))
+				_modifierAppliers[applierType] = list = new List<(int Id, int ApplierGenId, ICheck[] Checks)>();
 
-			_modifierAppliers[applierType].Add((modifierId, null));
+			list.Add((modifierId, applierGenId, checks?.Length > 0 ? checks : null));
+			return applierGenId;
+		}
+
+		/// <summary>
+		///		All appliers of the given type with their checks (null when the applier has no checks)
+		/// </summary>
+		public IEnumerable<(int Id, ICheck[] Checks)> GetAppliers(ApplierType applierType)
+		{
+			if (_modifierAppliers.TryGetValue(applierType, out var list))
+				foreach ((int id, int _, ICheck[] checks) in list)
+					yield return (id, checks);
 		}
 
 		public IEnumerable<int> GetApplierCastModifierIds()
 		{
 			if (_modifierAppliers.TryGetValue(ApplierType.Cast, out var list))
-				foreach ((int id, ICheck[] _) in list)
+				foreach ((int id, int _, ICheck[] _) in list)
 					yield return id;
 		}
 

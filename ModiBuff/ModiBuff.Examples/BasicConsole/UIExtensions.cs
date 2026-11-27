@@ -18,95 +18,9 @@ namespace ModiBuff.Examples.BasicConsole
 			                    $"{attacker.Damage} Damage");
 			//Appliers
 			//Name, description, checks, (states, like cooldown)
-			var applierAttackIds = ((Unit)owner).GetApplierCastModifierIds().ToArray();
-			if (applierAttackIds.Length > 0)
-			{
-				Console.GameMessage("Player attack appliers:");
-				for (int i = 0; i < applierAttackIds.Length; i++)
-				{
-					var modifierInfo = modifierRecipes.GetModifierInfo(applierAttackIds[i]);
-					Console.GameMessage($"{i + 1} - {modifierInfo.DisplayName} - {modifierInfo.Description}");
-				}
-			}
-
-			var applierCastIds = ((Unit)owner).GetApplierCastModifierIds().ToArray();
-			if (applierCastIds.Length > 0)
-			{
-				Console.GameMessage("Player cast appliers:");
-				for (int i = 0; i < applierCastIds.Length; i++)
-				{
-					var modifierInfo = modifierRecipes.GetModifierInfo(applierCastIds[i]);
-					Console.GameMessage($"{i + 1} - {modifierInfo.DisplayName} - {modifierInfo.Description}");
-				}
-			}
-
-			var applierAttackChecks = modifierApplierController.GetApplierAttackCheckModifiers();
-			if (applierAttackChecks != null && applierAttackChecks.Count > 0)
-			{
-				Console.GameMessage("Player attack applier checks:");
-				foreach (var applierAttackCheck in applierAttackChecks)
-				{
-					var modifierInfo = modifierRecipes.GetModifierInfo(applierAttackCheck.Id);
-					Console.GameMessage($"{modifierInfo.DisplayName} - {modifierInfo.Description}");
-					//TODO Need to get dummy state, probably from ModifierRecipes
-
-					//Right now we're getting all the data from the instance, which might not be needed
-					//Because most checks are without state
-					//But we encounter a small problem with manual generation of modifiers
-					var checks = applierAttackCheck.GetChecks();
-					for (int i = 0; i < checks.Length; i++)
-					{
-						switch (checks[i])
-						{
-							case CostCheck costCheck:
-								var data = costCheck.GetData();
-								Console.GameMessage($"Cost: {data.Cost} {data.CostType}");
-								break;
-							case CooldownCheck cooldownCheck:
-								var stateData = cooldownCheck.GetData();
-								Console.GameMessage($"Cooldown: {stateData.Timer}/{stateData.Cooldown}");
-								break;
-							case ChanceCheck chanceCheck:
-								Console.GameMessage($"Chance: {chanceCheck.GetData() * 100f}%");
-								break;
-						}
-					}
-				}
-			}
-
-			var applierCastChecks = modifierApplierController.GetApplierCastCheckModifiers();
-			if (applierCastChecks != null && applierCastChecks.Count > 0)
-			{
-				Console.GameMessage("Player attack applier checks:");
-				foreach (var applierCastCheck in applierCastChecks)
-				{
-					var modifierInfo = modifierRecipes.GetModifierInfo(applierCastCheck.Id);
-					Console.GameMessage($"{modifierInfo.DisplayName} - {modifierInfo.Description}");
-					//TODO Need to get dummy state, probably from ModifierRecipes
-
-					//Right now we're getting all the data from the instance, which might not be needed
-					//Because most checks are without state
-					//But we encounter a small problem with manual generation of modifiers
-					var checks = applierCastCheck.GetChecks();
-					for (int i = 0; i < checks.Length; i++)
-					{
-						switch (checks[i])
-						{
-							case CostCheck costCheck:
-								var data = costCheck.GetData();
-								Console.GameMessage($"Cost: {data.Cost} {data.CostType}");
-								break;
-							case CooldownCheck cooldownCheck:
-								var stateData = cooldownCheck.GetData();
-								Console.GameMessage($"Cooldown: {stateData.Timer}/{stateData.Cooldown}");
-								break;
-							case ChanceCheck chanceCheck:
-								Console.GameMessage($"Chance: {chanceCheck.GetData() * 100f}%");
-								break;
-						}
-					}
-				}
-			}
+			var unit = (Unit)owner;
+			PrintAppliers(unit, ApplierType.Attack, "attack", modifierRecipes);
+			PrintAppliers(unit, ApplierType.Cast, "cast", modifierRecipes);
 
 			//Normal modifiers
 			var references = modifierController.GetModifierReferences();
@@ -139,6 +53,41 @@ namespace ModiBuff.Examples.BasicConsole
 					var stackReference = modifierDataReference.GetStackReference();
 					if (stackReference != null)
 						Console.GameMessage($"Stacks: {stackReference.Stacks}/{stackReference.MaxStacks}");
+				}
+			}
+		}
+
+		private static void PrintAppliers(Unit unit, ApplierType applierType, string applierName,
+			IModifierRecipes modifierRecipes)
+		{
+			var appliers = unit.GetAppliers(applierType).ToArray();
+			if (appliers.Length == 0)
+				return;
+
+			Console.GameMessage($"Player {applierName} appliers:");
+			for (int i = 0; i < appliers.Length; i++)
+			{
+				var modifierInfo = modifierRecipes.GetModifierInfo(appliers[i].Id);
+				Console.GameMessage($"{i + 1} - {modifierInfo.DisplayName} - {modifierInfo.Description}");
+
+				//Checks are owned by the applier, most checks are without state
+				var checks = appliers[i].Checks;
+				for (int j = 0; j < checks?.Length; j++)
+				{
+					switch (checks[j])
+					{
+						case CostCheck costCheck:
+							var data = costCheck.GetData();
+							Console.GameMessage($"Cost: {data.Cost} {data.CostType}");
+							break;
+						case CooldownCheck cooldownCheck:
+							var stateData = cooldownCheck.GetData();
+							Console.GameMessage($"Cooldown: {stateData.Timer}/{stateData.Cooldown}");
+							break;
+						case ChanceCheck chanceCheck:
+							Console.GameMessage($"Chance: {chanceCheck.GetData() * 100f}%");
+							break;
+					}
 				}
 			}
 		}
