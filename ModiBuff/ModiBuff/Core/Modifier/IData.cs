@@ -26,9 +26,13 @@ namespace ModiBuff.Core
 		: EffectData(Data);
 }
 
+//Only needed below .NET 5. The guard also avoids a duplicate definition when Core and Units
+//are compiled into one assembly (ex. source dropped into a Godot project)
+#if !NET5_0_OR_GREATER
 namespace System.Runtime.CompilerServices
 {
 	internal static class IsExternalInit
 	{
 	}
 }
+#endif
