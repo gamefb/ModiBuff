@@ -11,7 +11,8 @@ config_version=5
 [application]
 
 config/name="ModiBuff Godot Extension"
-config/description="Godot project for the ModiBuff Godot extension (addons/modibuff/Extensions/Godot)."
+config/description="Godot project for the ModiBuff Godot extension (addons/modibuff/Extensions/Godot), with a test level that uses it."
+run/main_scene="res://test_level/test_level.tscn"
 config/features=PackedStringArray("4.8", "C#", "GL Compatibility")
 
 [dotnet]

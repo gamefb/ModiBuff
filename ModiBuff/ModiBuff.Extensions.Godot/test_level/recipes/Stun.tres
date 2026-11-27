@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ModifierRecipeResource" format=3]
+
+[ext_resource type="Script" path="res://addons/modibuff/Extensions/Godot/recipe_creation/ModifierRecipeResource.cs" id="1_recipe"]
+[ext_resource type="Script" path="res://addons/modibuff/Extensions/Godot/recipe_creation/ApplyCostResource.cs" id="2_cost"]
+[ext_resource type="Script" path="res://addons/modibuff/Extensions/Godot/recipe_creation/effects/StatusEffectEffectResource.cs" id="3_status"]
+
+[sub_resource type="Resource" id="cost"]
+script = ExtResource("2_cost")
+Amount = 40.0
+
+[sub_resource type="Resource" id="status"]
+script = ExtResource("3_status")
+StatusEffectType = 1
+Duration = 3.0
+EffectOn = 1
+
+[resource]
+script = ExtResource("1_recipe")
+ApplyCooldown = 6.0
+ApplyCost = SubResource("cost")
+EffectResources = [SubResource("status")]
+Name = "Stun"
+Id = 5
