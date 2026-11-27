@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ModifierRecipeResource" format=3]
+
+[ext_resource type="Script" path="res://addons/modibuff/Extensions/Godot/recipe_creation/ModifierRecipeResource.cs" id="1_recipe"]
+[ext_resource type="Script" path="res://addons/modibuff/Extensions/Godot/recipe_creation/ApplyCostResource.cs" id="2_cost"]
+[ext_resource type="Script" path="res://addons/modibuff/Extensions/Godot/recipe_creation/effects/DamageEffectResource.cs" id="3_damage"]
+
+[sub_resource type="Resource" id="cost"]
+script = ExtResource("2_cost")
+Amount = 25.0
+
+[sub_resource type="Resource" id="damage"]
+script = ExtResource("3_damage")
+Damage = 8.0
+EffectOn = 2
+
+[resource]
+script = ExtResource("1_recipe")
+ApplyCost = SubResource("cost")
+EffectResources = [SubResource("damage")]
+Interval = 1.0
+RemoveDuration = 4.0
+RefreshType = 2
+Name = "Poison"
+Id = 4

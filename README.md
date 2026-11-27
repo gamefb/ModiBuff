@@ -292,6 +292,8 @@ unit.TryCast(fireballId, enemy);
 
 > Note: When running from the editor, generated modifier names and ids are written back to the recipe resources.
 
+The project has a [test level](ModiBuff/ModiBuff.Extensions.Godot/test_level) that uses all of the above.
+
 ## Unity
 
 > Important: Unity installation is currently not maintained, you will be missing new files and their meta files.

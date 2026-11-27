@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ModifierRecipeResource" format=3]
+
+[ext_resource type="Script" path="res://addons/modibuff/Extensions/Godot/recipe_creation/ModifierRecipeResource.cs" id="1_recipe"]
+[ext_resource type="Script" path="res://addons/modibuff/Extensions/Godot/recipe_creation/effects/AddDamageEffectResource.cs" id="2_add_damage"]
+
+[sub_resource type="Resource" id="add_damage"]
+script = ExtResource("2_add_damage")
+AddDamage = 15.0
+EffectState = 2
+EffectOn = 1
+
+[resource]
+script = ExtResource("1_recipe")
+ApplyCondition = 1
+EffectResources = [SubResource("add_damage")]
+RemoveDuration = 6.0
+Name = "Focus"
+Id = 2
