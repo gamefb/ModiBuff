@@ -1,5 +1,6 @@
 using Godot;
 using ModiBuff.Core;
+using ModiBuff.Core.Units;
 
 namespace ModiBuff.Extensions.Godot
 {
@@ -13,8 +14,8 @@ namespace ModiBuff.Extensions.Godot
 		///		Name of the modifier that should be applied.
 		/// </summary>
 		[Export]
-		public string ModifierName { get; set; }
+		public string ModifierName { get; set; } = "";
 
-		public override IEffect GetEffect() => new ApplierEffect(ModifierName);
+		public override IEffect GetEffect() => new ApplierEffect(ModifierName, targeting: Targeting);
 	}
 }

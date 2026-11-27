@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 using ModiBuff.Core;
 using ModiBuff.Core.Units;
@@ -15,6 +16,8 @@ namespace ModiBuff.Extensions.Godot
 		//Apply checks are different than effect checks, in a way that
 		//apply checks are checked before the modifier is applied to the target.
 		//While effect checks happen when the modifier is applied to the target, and check the target instead of the owner.
+		//Apply checks aren't part of the recipe, they belong to the applier that a unit owns.
+		//Use CreateApplyChecks (or ModifierRecipesGodot.CreateApplyChecks) and feed the checks to the unit's applier.
 
 		/// <summary>
 		///		For a modifier to be applied, the owner must be able to perform an action (ex. attack, cast, move).
@@ -37,19 +40,19 @@ namespace ModiBuff.Extensions.Godot
 		/// </summary>
 		[ExportSubgroup("")]
 		[Export]
-		public ConditionType? ApplyCondition { get; set; }
+		public GodotConditionType ApplyCondition { get; set; }
 
 		/// <summary>
 		///		For a modifier to be applied, the owner must be in a specific state (ex. full health).
 		/// </summary>
 		[Export]
-		public StatApplyConditionResource StatApplyCondition { get; set; }
+		public StatApplyConditionResource? StatApplyCondition { get; set; }
 
 		/// <summary>
 		///		For a modifier to be applied, the owner must have a modifier with <see cref="ModifierNameApplyCondition"/> name.
 		/// </summary>
 		[Export]
-		public string ModifierNameApplyCondition { get; set; }
+		public string? ModifierNameApplyCondition { get; set; }
 
 		/// <summary>
 		///		Cooldown set for when we can try to apply the modifier to a target.
@@ -72,7 +75,7 @@ namespace ModiBuff.Extensions.Godot
 			get => _applyChance;
 			set
 			{
-				if (value >= 1)
+				if (value > 1)
 					value /= 100f;
 				_applyChance = value;
 			}
@@ -105,19 +108,19 @@ namespace ModiBuff.Extensions.Godot
 		/// </summary>
 		[ExportSubgroup("")]
 		[Export]
-		public ConditionType? EffectCondition { get; set; }
+		public GodotConditionType EffectCondition { get; set; }
 
 		/// <summary>
 		///		To trigger the modifier effects, the owner must be in a specific state (ex. full health).
 		/// </summary>
 		[Export]
-		public StatApplyConditionResource StatEffectCondition { get; set; }
+		public StatApplyConditionResource? StatEffectCondition { get; set; }
 
 		/// <summary>
 		///		To trigger the modifier effects, the owner must have a modifier with <see cref="ModifierNameApplyCondition"/> name.
 		/// </summary>
 		[Export]
-		public string ModifierNameEffectCondition { get; set; }
+		public string? ModifierNameEffectCondition { get; set; }
 
 		/// <summary>
 		///		Cooldown set for when we can try to trigger the effects.
@@ -144,7 +147,7 @@ namespace ModiBuff.Extensions.Godot
 			get => _effectChance;
 			set
 			{
-				if (value >= 1)
+				if (value > 1)
 					value /= 100f;
 				_effectChance = value;
 			}
@@ -157,7 +160,7 @@ namespace ModiBuff.Extensions.Godot
 		/// </summary>
 		[ExportGroup("")] //[ExportGroup("Effects")]
 		[Export]
-		public EffectOnResource[] EffectResources { get; set; }
+		public EffectOnResource[]? EffectResources { get; set; }
 
 		//---Actions---
 
@@ -192,7 +195,53 @@ namespace ModiBuff.Extensions.Godot
 		///		Adds stack functionality to the modifier. A stack is added every time the modifier gets re-added to the target.
 		/// </summary>
 		[Export]
-		public StackResource StackResource { get; set; }
+		public StackResource? StackResource { get; set; }
+
+		/// <summary>
+		///		Creates the apply checks that are set up on this resource, null if there are none.
+		///		Apply checks are owned by appliers, feed them to the unit when adding the applier,
+		///		ex. <see cref="IModifierApplierOwner.AddApplierModifierNew"/>.
+		/// </summary>
+		/// <remarks> Returns new check instances on every call, checks like cooldown have state per applier. </remarks>
+		public ICheck[]? CreateApplyChecks(ModifierIdManager idManager)
+		{
+			var checks = new List<ICheck>();
+
+			if (LegalActionApplyCondition != LegalAction.None)
+				checks.Add(new LegalActionCheck(LegalActionApplyCondition));
+
+			if (StatusEffectApplyCondition != StatusEffectType.None)
+				checks.Add(new StatusEffectCheck(StatusEffectApplyCondition));
+
+			var applyCondition = ApplyCondition.GetModiBuffConditionType();
+			if (applyCondition != null)
+				checks.Add(new ConditionCheck(applyCondition.Value));
+
+			if (StatApplyCondition != null)
+				checks.Add(new StatCheck(StatApplyCondition.StatType, StatApplyCondition.ComparisonType,
+					StatApplyCondition.Value));
+
+			if (!string.IsNullOrEmpty(ModifierNameApplyCondition))
+			{
+				int? modifierId = idManager.GetId(ModifierNameApplyCondition);
+				if (modifierId != null)
+					checks.Add(new ModifierIdCheck(modifierId.Value));
+				else
+					GD.PushError($"Recipe {Name} has an apply condition on modifier {ModifierNameApplyCondition}, " +
+					             "but no modifier with that name exists");
+			}
+
+			if (ApplyCooldown > 0)
+				checks.Add(new CooldownCheck(ApplyCooldown));
+
+			if (ApplyCost != null)
+				checks.Add(new CostCheck(ApplyCost.CostType, ApplyCost.Amount));
+
+			if (ApplyChance > 0)
+				checks.Add(new ChanceCheck(ApplyChance));
+
+			return checks.Count > 0 ? checks.ToArray() : null;
+		}
 
 		public override bool Validate()
 		{

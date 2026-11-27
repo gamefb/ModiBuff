@@ -6,7 +6,7 @@ namespace ModiBuff.Extensions.Godot
 	{
 		private int _id;
 
-		[Export] public string Name { get; set; }
+		[Export] public string Name { get; set; } = "";
 
 		[Export]
 		public int Id //TODO Not working currently (readonly)
@@ -17,7 +17,8 @@ namespace ModiBuff.Extensions.Godot
 
 		public bool NeedsSaving { get; private set; }
 
-		public void SetName(string name)
+		//Hides Resource.SetName (resource_name) on purpose, this is the modifier name
+		public new void SetName(string name)
 		{
 			NeedsSaving = true;
 			Name = name;

@@ -10,7 +10,7 @@ namespace ModiBuff.Extensions.Godot
 		///		Effects that get applied on specific actions (init, stack, interval, duration). 
 		/// </summary>
 		[Export]
-		public EffectOnResource[] EffectResources { get; set; }
+		public EffectOnResource[]? EffectResources { get; set; }
 
 		/// <summary>
 		///		How many seconds should pass before the aura effect modifier gets removed. Should be a bit longer than aura interval.
