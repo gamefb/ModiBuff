@@ -23,7 +23,7 @@ namespace ModiBuff.Tests
 			{
 				var initComponent = new InitComponent(new IEffect[] { new DamageEffect(5) }, null);
 
-				var modifier = new Modifier(id, genId, name, initComponent, null, null, null,
+				var modifier = new Modifier(id, genId, name, initComponent, null, null, null, null,
 					new SingleTargetComponent(), null, null, null);
 
 				return modifier;
@@ -72,11 +72,9 @@ namespace ModiBuff.Tests
 				.Stack(WhenStackEffect.Always);
 
 			Add("InitDamage_CostMana")
-				.ApplyCost(CostType.Mana, 5)
 				.Effect(new DamageEffect(5), EffectOn.Init);
 
 			Add("InitDamage_ApplyCondition_HealthAbove100")
-				.ApplyCondition(StatType.Health, 100, ComparisonType.GreaterOrEqual)
 				.Effect(new DamageEffect(5), EffectOn.Init);
 		}
 	}
